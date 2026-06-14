@@ -164,6 +164,32 @@ The package is written to `./artifacts/LucideSharp.1.0.0.nupkg`.
 dotnet nuget push ./artifacts/LucideSharp.1.0.0.nupkg --api-key <YOUR_API_KEY> --source https://api.nuget.org/v3/index.json
 ```
 
+## Continuous Integration
+
+GitHub Actions automatically builds and packs the library on every push to `main` and on pull requests. Publishing to [nuget.org](https://www.nuget.org) is triggered when you push a version tag.
+
+### Setup
+
+1. Create an API key at [nuget.org/account/apikeys](https://www.nuget.org/account/apikeys) with **Push** scope for package `LucideSharp`.
+2. Add it as a repository secret named `NUGET_API_KEY` (**Settings → Secrets and variables → Actions**).
+
+### Release workflow
+
+```bash
+# Bump version in src/LucideSharp.WinForms/LucideSharp.WinForms.csproj, commit, then:
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The workflow (`.github/workflows/ci.yml`) will:
+
+1. Build the full solution on `windows-latest` (required for WinForms + net48)
+2. Pack `LucideSharp` with the tag version (e.g. `v1.0.0` → package version `1.0.0`)
+3. Upload `.nupkg` and `.snupkg` artifacts
+4. Publish both packages to nuget.org
+
+You can also trigger a build manually from the **Actions** tab via **workflow_dispatch**.
+
 ## Sample Application
 
 ```bash
