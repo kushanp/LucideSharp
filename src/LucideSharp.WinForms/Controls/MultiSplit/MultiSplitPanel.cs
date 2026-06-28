@@ -5,6 +5,7 @@ namespace LucideSharp.WinForms;
 /// <summary>
 /// A panel hosted inside a <see cref="MultiSplitContainer"/>.
 /// </summary>
+[Designer(typeof(Design.MultiSplitPanelDesigner))]
 [ToolboxItem(false)]
 public class MultiSplitPanel : Panel
 {

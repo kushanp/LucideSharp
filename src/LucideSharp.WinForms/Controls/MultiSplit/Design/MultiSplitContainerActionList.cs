@@ -35,10 +35,22 @@ internal sealed class MultiSplitContainerActionList : DesignerActionList
 
     public void AddPanel()
     {
+        var host = GetService(typeof(IDesignerHost)) as IDesignerHost;
         var componentChangeService = GetService(typeof(IComponentChangeService)) as IComponentChangeService;
         var panelsMember = TypeDescriptor.GetProperties(Container)[nameof(MultiSplitContainer.Panels)];
         componentChangeService?.OnComponentChanging(Container, panelsMember);
-        Container.AddPanel();
+
+        if (host is not null)
+        {
+            var panel = (MultiSplitPanel)host.CreateComponent(typeof(MultiSplitPanel));
+            Container.InsertPanel(Container.Panels.Count, panel);
+            _designer.RegisterPanel(panel);
+        }
+        else
+        {
+            Container.AddPanel();
+        }
+
         componentChangeService?.OnComponentChanged(Container, panelsMember, null, null);
     }
 
@@ -49,10 +61,22 @@ internal sealed class MultiSplitContainerActionList : DesignerActionList
             return;
         }
 
+        var host = GetService(typeof(IDesignerHost)) as IDesignerHost;
         var componentChangeService = GetService(typeof(IComponentChangeService)) as IComponentChangeService;
         var panelsMember = TypeDescriptor.GetProperties(Container)[nameof(MultiSplitContainer.Panels)];
+        var panel = Container.Panels[Container.Panels.Count - 1];
         componentChangeService?.OnComponentChanging(Container, panelsMember);
-        Container.RemovePanelAt(Container.Panels.Count - 1);
+
+        if (host is not null)
+        {
+            Container.DetachPanel(panel);
+            host.DestroyComponent(panel);
+        }
+        else
+        {
+            Container.RemovePanelAt(Container.Panels.Count - 1);
+        }
+
         componentChangeService?.OnComponentChanged(Container, panelsMember, null, null);
     }
 

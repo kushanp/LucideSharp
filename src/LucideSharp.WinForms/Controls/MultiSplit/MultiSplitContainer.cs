@@ -175,14 +175,20 @@ public class MultiSplitContainer : ContainerControl
         }
 
         var panel = _panels[index];
+        DetachPanel(panel);
+        panel.Dispose();
+        NormalizePanelSizes();
+        PerformLayoutAndInvalidate();
+    }
+
+    internal void DetachPanel(MultiSplitPanel panel)
+    {
         panel.Owner = null;
         panel.SuppressOwnerNotification = true;
         panel.Collapsed = false;
         panel.SuppressOwnerNotification = false;
         _panels.RemoveInternal(panel);
         Controls.Remove(panel);
-        panel.Dispose();
-        NormalizePanelSizes();
         PerformLayoutAndInvalidate();
     }
 
@@ -263,16 +269,16 @@ public class MultiSplitContainer : ContainerControl
         base.OnResize(e);
         if (!_layoutSuspended)
         {
-            ApplyLayout(updateSplitSizes: true);
+            ApplyLayout(updateSplitSizes: !DesignMode);
         }
     }
 
     protected override void OnLayout(LayoutEventArgs levent)
     {
         base.OnLayout(levent);
-        if (!_layoutSuspended && IsHandleCreated)
+        if (!_layoutSuspended && (IsHandleCreated || DesignMode))
         {
-            ApplyLayout(updateSplitSizes: true);
+            ApplyLayout(updateSplitSizes: !DesignMode);
         }
     }
 
@@ -398,7 +404,13 @@ public class MultiSplitContainer : ContainerControl
 
     private void PerformLayoutAndInvalidate()
     {
-        ApplyLayout(updateSplitSizes: true);
+        ApplyLayout(updateSplitSizes: !DesignMode);
+        Invalidate();
+    }
+
+    internal void EnsureLayout()
+    {
+        ApplyLayout(updateSplitSizes: !DesignMode);
         Invalidate();
     }
 
