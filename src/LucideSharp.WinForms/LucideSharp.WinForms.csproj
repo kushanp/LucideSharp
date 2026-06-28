@@ -14,12 +14,12 @@
 
     <!-- NuGet package metadata -->
     <PackageId>LucideSharp</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>LucideSharp Contributors</Authors>
     <Company>LucideSharp</Company>
     <Product>LucideSharp</Product>
-    <Description>Beautiful Lucide SVG icons for Windows Forms with high-quality SkiaSharp rendering, designer support, and smart bitmap caching.</Description>
-    <PackageTags>winforms;svg;icons;lucide;lucidesharp;skiasharp</PackageTags>
+    <Description>Beautiful Lucide SVG icons and MultiSplitContainer for Windows Forms with high-quality SkiaSharp rendering, designer support, and smart bitmap caching.</Description>
+    <PackageTags>winforms;svg;icons;lucide;lucidesharp;skiasharp;splitcontainer;multisplit</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/lucidesharp/lucidesharp</PackageProjectUrl>
@@ -34,6 +34,10 @@
   <ItemGroup>
     <PackageReference Include="Svg.Skia" Version="3.0.0" />
     <PackageReference Include="Svg" Version="3.4.7" Aliases="ClassicSvg" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <Reference Include="System.Design" />
   </ItemGroup>
 
   <ItemGroup>
