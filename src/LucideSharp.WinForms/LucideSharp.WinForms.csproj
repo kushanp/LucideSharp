@@ -14,7 +14,7 @@
 
     <!-- NuGet package metadata -->
     <PackageId>LucideSharp</PackageId>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Authors>LucideSharp Contributors</Authors>
     <Company>LucideSharp</Company>
     <Product>LucideSharp</Product>
@@ -29,6 +29,12 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <Deterministic>true</Deterministic>
   </PropertyGroup>
 
   <ItemGroup>

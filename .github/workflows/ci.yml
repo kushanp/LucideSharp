@@ -18,6 +18,7 @@ env:
   PROJECT_PATH: src/LucideSharp.WinForms/LucideSharp.WinForms.csproj
   SOLUTION_PATH: LucideSharp.slnx
   ARTIFACTS_DIR: artifacts
+  SYMBOL_VALIDATOR_PATH: tools/SymbolValidator/SymbolValidator.csproj
 
 jobs:
   build:
@@ -50,35 +51,44 @@ jobs:
       - name: Restore
         run: dotnet restore ${{ env.SOLUTION_PATH }}
 
-      - name: Build
+      - name: Pack NuGet package
+        run: >
+          dotnet pack ${{ env.PROJECT_PATH }}
+          --configuration Release
+          --no-restore
+          --output ${{ env.ARTIFACTS_DIR }}
+          -p:Version=${{ steps.version.outputs.version }}
+          -p:PackageVersion=${{ steps.version.outputs.version }}
+          -p:ContinuousIntegrationBuild=true
+
+      - name: Build solution (verify samples)
         run: >
           dotnet build ${{ env.SOLUTION_PATH }}
           --configuration Release
           --no-restore
           -p:Version=${{ steps.version.outputs.version }}
           -p:PackageVersion=${{ steps.version.outputs.version }}
+          -p:ContinuousIntegrationBuild=true
 
-      - name: Pack NuGet package
-        run: >
-          dotnet pack ${{ env.PROJECT_PATH }}
-          --configuration Release
-          --no-build
-          --output ${{ env.ARTIFACTS_DIR }}
-          -p:Version=${{ steps.version.outputs.version }}
-          -p:PackageVersion=${{ steps.version.outputs.version }}
+      - name: Validate symbol package
+        shell: pwsh
+        run: |
+          $nupkg = Get-ChildItem -Path "${{ env.ARTIFACTS_DIR }}" -Filter "*.nupkg" -File | Select-Object -First 1
+          $snupkg = Get-ChildItem -Path "${{ env.ARTIFACTS_DIR }}" -Filter "*.snupkg" -File | Select-Object -First 1
+
+          if (-not $nupkg -or -not $snupkg) {
+            throw "Expected both .nupkg and .snupkg in ${{ env.ARTIFACTS_DIR }}."
+          }
+
+          dotnet run --project ${{ env.SYMBOL_VALIDATOR_PATH }} -- `
+            $nupkg.FullName `
+            $snupkg.FullName
 
       - name: Upload NuGet packages
         uses: actions/upload-artifact@v4
         with:
           name: nuget-packages
-          path: ${{ env.ARTIFACTS_DIR }}/*.nupkg
-          if-no-files-found: error
-
-      - name: Upload symbol packages
-        uses: actions/upload-artifact@v4
-        with:
-          name: nuget-symbols
-          path: ${{ env.ARTIFACTS_DIR }}/*.snupkg
+          path: ${{ env.ARTIFACTS_DIR }}/
           if-no-files-found: error
 
   publish:
@@ -92,13 +102,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: nuget-packages
-          path: ${{ env.ARTIFACTS_DIR }}/packages
-
-      - name: Download symbol packages
-        uses: actions/download-artifact@v4
-        with:
-          name: nuget-symbols
-          path: ${{ env.ARTIFACTS_DIR }}/symbols
+          path: ${{ env.ARTIFACTS_DIR }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -114,29 +118,39 @@ jobs:
             throw "NUGET_API_KEY secret is not configured."
           }
 
-          $sources = @(
-            "${{ env.ARTIFACTS_DIR }}/packages",
-            "${{ env.ARTIFACTS_DIR }}/symbols"
-          )
+          $nupkg = Get-ChildItem -Path "${{ env.ARTIFACTS_DIR }}" -Filter "*.nupkg" -File | Select-Object -First 1
+          $snupkg = Get-ChildItem -Path "${{ env.ARTIFACTS_DIR }}" -Filter "*.snupkg" -File | Select-Object -First 1
 
-          foreach ($sourceDir in $sources) {
-            Write-Host "Listing $sourceDir"
-            Get-ChildItem -Path $sourceDir -Recurse -File | Format-Table Name, Length, FullName
-          }
-
-          $packages = @(
-            Get-ChildItem -Path "${{ env.ARTIFACTS_DIR }}/packages" -Filter "*.nupkg" -File -ErrorAction SilentlyContinue
-            Get-ChildItem -Path "${{ env.ARTIFACTS_DIR }}/symbols" -Filter "*.snupkg" -File -ErrorAction SilentlyContinue
-          )
-
-          if ($packages.Count -eq 0) {
+          if (-not $nupkg -or -not $snupkg) {
             throw "No NuGet package files found to publish."
           }
 
-          foreach ($package in $packages) {
-            Write-Host "Pushing $($package.FullName)"
-            dotnet nuget push $package.FullName `
-              --api-key $env:NUGET_API_KEY `
-              --source https://api.nuget.org/v3/index.json `
-              --skip-duplicate
+          Write-Host "Listing ${{ env.ARTIFACTS_DIR }}"
+          Get-ChildItem -Path "${{ env.ARTIFACTS_DIR }}" -File | Format-Table Name, Length, FullName
+
+          Write-Host "Pushing $($nupkg.FullName)"
+          $pushOutput = dotnet nuget push $nupkg.FullName `
+            --api-key $env:NUGET_API_KEY `
+            --source https://api.nuget.org/v3/index.json `
+            --skip-duplicate 2>&1 | Out-String
+
+          Write-Host $pushOutput
+
+          if ($pushOutput -match '409|already exists|Conflict|already been pushed') {
+            Write-Warning "Main package already exists on NuGet.org. Skipping symbol package push to avoid PDB/DLL mismatch."
+            exit 0
+          }
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to push $($nupkg.Name)."
+          }
+
+          Write-Host "Pushing $($snupkg.FullName)"
+          dotnet nuget push $snupkg.FullName `
+            --api-key $env:NUGET_API_KEY `
+            --source https://api.nuget.org/v3/index.json `
+            --skip-duplicate
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to push $($snupkg.Name)."
           }
