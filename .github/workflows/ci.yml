@@ -118,39 +118,52 @@ jobs:
             throw "NUGET_API_KEY secret is not configured."
           }
 
-          $nupkg = Get-ChildItem -Path "${{ env.ARTIFACTS_DIR }}" -Filter "*.nupkg" -File | Select-Object -First 1
-          $snupkg = Get-ChildItem -Path "${{ env.ARTIFACTS_DIR }}" -Filter "*.snupkg" -File | Select-Object -First 1
+          $nupkg = Get-ChildItem -Path "${{ env.ARTIFACTS_DIR }}" -Filter "*.nupkg" -File -Recurse | Select-Object -First 1
+          $snupkg = Get-ChildItem -Path "${{ env.ARTIFACTS_DIR }}" -Filter "*.snupkg" -File -Recurse | Select-Object -First 1
 
           if (-not $nupkg -or -not $snupkg) {
             throw "No NuGet package files found to publish."
           }
 
           Write-Host "Listing ${{ env.ARTIFACTS_DIR }}"
-          Get-ChildItem -Path "${{ env.ARTIFACTS_DIR }}" -File | Format-Table Name, Length, FullName
+          Get-ChildItem -Path "${{ env.ARTIFACTS_DIR }}" -Recurse -File | Format-Table Name, Length, FullName
+
+          function Push-NuGetPackage {
+            param(
+              [Parameter(Mandatory = $true)][string]$PackagePath
+            )
+
+            $output = @(
+              & dotnet nuget push $PackagePath `
+                --api-key $env:NUGET_API_KEY `
+                --source https://api.nuget.org/v3/index.json `
+                --skip-duplicate 2>&1
+            )
+            $exitCode = $LASTEXITCODE
+            $text = $output | Out-String
+            Write-Host $text
+
+            return [PSCustomObject]@{
+              ExitCode = $exitCode
+              Output = $text
+            }
+          }
 
           Write-Host "Pushing $($nupkg.FullName)"
-          $pushOutput = dotnet nuget push $nupkg.FullName `
-            --api-key $env:NUGET_API_KEY `
-            --source https://api.nuget.org/v3/index.json `
-            --skip-duplicate 2>&1 | Out-String
+          $nupkgResult = Push-NuGetPackage -PackagePath $nupkg.FullName
 
-          Write-Host $pushOutput
+          if ($nupkgResult.ExitCode -ne 0) {
+            throw "Failed to push $($nupkg.Name). Exit code: $($nupkgResult.ExitCode)"
+          }
 
-          if ($pushOutput -match '409|already exists|Conflict|already been pushed') {
+          if ($nupkgResult.Output -match '409 \(Conflict\)|already exists and cannot be modified|already been pushed') {
             Write-Warning "Main package already exists on NuGet.org. Skipping symbol package push to avoid PDB/DLL mismatch."
             exit 0
           }
 
-          if ($LASTEXITCODE -ne 0) {
-            throw "Failed to push $($nupkg.Name)."
-          }
-
           Write-Host "Pushing $($snupkg.FullName)"
-          dotnet nuget push $snupkg.FullName `
-            --api-key $env:NUGET_API_KEY `
-            --source https://api.nuget.org/v3/index.json `
-            --skip-duplicate
+          $snupkgResult = Push-NuGetPackage -PackagePath $snupkg.FullName
 
-          if ($LASTEXITCODE -ne 0) {
-            throw "Failed to push $($snupkg.Name)."
+          if ($snupkgResult.ExitCode -ne 0) {
+            throw "Failed to push $($snupkg.Name). Exit code: $($snupkgResult.ExitCode)"
           }
