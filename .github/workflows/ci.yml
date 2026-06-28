@@ -92,13 +92,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: nuget-packages
-          path: ${{ env.ARTIFACTS_DIR }}
+          path: ${{ env.ARTIFACTS_DIR }}/packages
 
       - name: Download symbol packages
         uses: actions/download-artifact@v4
         with:
           name: nuget-symbols
-          path: ${{ env.ARTIFACTS_DIR }}
+          path: ${{ env.ARTIFACTS_DIR }}/symbols
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -106,13 +106,37 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Publish to NuGet.org
+        shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: |
-          dotnet nuget push "${{ env.ARTIFACTS_DIR }}\*.nupkg" `
-            --api-key "${{ secrets.NUGET_API_KEY }}" `
-            --source https://api.nuget.org/v3/index.json `
-            --skip-duplicate
+          if ([string]::IsNullOrWhiteSpace($env:NUGET_API_KEY)) {
+            throw "NUGET_API_KEY secret is not configured."
+          }
 
-          dotnet nuget push "${{ env.ARTIFACTS_DIR }}\*.snupkg" `
-            --api-key "${{ secrets.NUGET_API_KEY }}" `
-            --source https://api.nuget.org/v3/index.json `
-            --skip-duplicate
+          $sources = @(
+            "${{ env.ARTIFACTS_DIR }}/packages",
+            "${{ env.ARTIFACTS_DIR }}/symbols"
+          )
+
+          foreach ($sourceDir in $sources) {
+            Write-Host "Listing $sourceDir"
+            Get-ChildItem -Path $sourceDir -Recurse -File | Format-Table Name, Length, FullName
+          }
+
+          $packages = @(
+            Get-ChildItem -Path "${{ env.ARTIFACTS_DIR }}/packages" -Filter "*.nupkg" -File -ErrorAction SilentlyContinue
+            Get-ChildItem -Path "${{ env.ARTIFACTS_DIR }}/symbols" -Filter "*.snupkg" -File -ErrorAction SilentlyContinue
+          )
+
+          if ($packages.Count -eq 0) {
+            throw "No NuGet package files found to publish."
+          }
+
+          foreach ($package in $packages) {
+            Write-Host "Pushing $($package.FullName)"
+            dotnet nuget push $package.FullName `
+              --api-key $env:NUGET_API_KEY `
+              --source https://api.nuget.org/v3/index.json `
+              --skip-duplicate
+          }
