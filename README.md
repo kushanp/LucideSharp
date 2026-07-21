@@ -2,12 +2,17 @@
 
 Beautiful [Lucide](https://lucide.dev/) SVG icons for Windows Forms — inspired by FontAwesome.Sharp, powered by SkiaSharp.
 
-LucideSharp makes it easy to use 1,700+ Lucide icons in WinForms apps with a designer-friendly `LucideIcon` control, static rendering helpers, smart bitmap caching, and two SVG render engines.
+LucideSharp makes it easy to use 1,700+ Lucide icons in WinForms apps with a designer-friendly `LucideIcon` control, `IconButton` / `IconToolStripButton` / `IconDropDownButton` for forms and toolbars, static rendering helpers, smart bitmap caching, and two SVG render engines.
+
+![LucideSharp WinForms sample](assets/screenshots/demo.png)
 
 ## Features
 
 - **Strongly typed icons** via the `LucideKind` enum
 - **`LucideIcon` control** with full Visual Studio designer support
+- **`IconButton`** — FontAwesome.Sharp-style button with Lucide icons
+- **`IconToolStripButton`** — FontAwesome.Sharp-style tool strip button with Lucide icons
+- **`IconDropDownButton`** — FontAwesome.Sharp-style tool strip drop-down button with Lucide icons
 - **Static helpers** for bitmaps, images, and preconfigured controls
 - **High-quality rendering** using **Svg.Skia + SkiaSharp** (default)
 - **Classic Svg renderer** as an alternative (`RenderEngine.ClassicSvg`)
@@ -48,6 +53,71 @@ var icon = new LucideIcon
 
 Controls.Add(icon);
 ```
+
+### IconButton
+
+Drop-in style replacement for FontAwesome.Sharp's `IconButton`:
+
+```csharp
+using LucideSharp.WinForms;
+
+var button = new IconButton
+{
+    Text = "Search",
+    Kind = LucideKind.Search,
+    IconColor = Color.SteelBlue,
+    IconSize = 20,
+    TextImageRelation = TextImageRelation.ImageBeforeText
+};
+```
+
+### IconToolStripButton
+
+Drop-in style replacement for FontAwesome.Sharp's `IconToolStripButton`:
+
+```csharp
+using LucideSharp.WinForms;
+
+toolStrip.Items.Add(new IconToolStripButton
+{
+    Text = "Search",
+    Kind = LucideKind.Search,
+    IconColor = Color.SteelBlue,
+    IconSize = 20,
+    DisplayStyle = ToolStripItemDisplayStyle.Image
+});
+```
+
+### IconDropDownButton
+
+Drop-in style replacement for FontAwesome.Sharp's `IconDropDownButton`:
+
+```csharp
+using LucideSharp.WinForms;
+
+var menu = new IconDropDownButton
+{
+    Text = "More",
+    Kind = LucideKind.Ellipsis,
+    IconColor = Color.SlateGray,
+    IconSize = 20,
+    DisplayStyle = ToolStripItemDisplayStyle.Image
+};
+menu.DropDownItems.Add("Option A");
+toolStrip.Items.Add(menu);
+```
+
+These button controls share the same property mapping from FontAwesome.Sharp:
+
+| FontAwesome.Sharp | LucideSharp |
+|-------------------|-------------|
+| `IconChar` | `Kind` (`LucideKind`) |
+| `IconColor` | `IconColor` |
+| `IconSize` | `IconSize` |
+| `IconFont` | *(omit — Lucide has no font styles)* |
+| `Flip` / `Rotation` | `Flip` / `Rotation` |
+
+Icon names do not always match FontAwesome one-to-one; pick the closest `LucideKind`.
 
 ### Static API
 
@@ -156,12 +226,12 @@ dotnet build LucideSharp.slnx
 dotnet pack src/LucideSharp.WinForms/LucideSharp.WinForms.csproj -c Release -o ./artifacts
 ```
 
-The package is written to `./artifacts/LucideSharp.1.0.0.nupkg`.
+The package is written to `./artifacts/LucideSharp.<version>.nupkg` (for example `LucideSharp.1.0.2.nupkg`).
 
 ### Publish to nuget.org
 
 ```bash
-dotnet nuget push ./artifacts/LucideSharp.1.0.0.nupkg --api-key <YOUR_API_KEY> --source https://api.nuget.org/v3/index.json
+dotnet nuget push ./artifacts/LucideSharp.1.0.2.nupkg --api-key <YOUR_API_KEY> --source https://api.nuget.org/v3/index.json
 ```
 
 ## Continuous Integration
@@ -177,14 +247,14 @@ GitHub Actions automatically builds and packs the library on every push to `main
 
 ```bash
 # Bump version in src/LucideSharp.WinForms/LucideSharp.WinForms.csproj, commit, then:
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.0.2
+git push origin v1.0.2
 ```
 
 The workflow (`.github/workflows/ci.yml`) will:
 
 1. Build the full solution on `windows-latest` (required for WinForms + net48)
-2. Pack `LucideSharp` with the tag version (e.g. `v1.0.0` → package version `1.0.0`)
+2. Pack `LucideSharp` with the tag version (e.g. `v1.0.2` → package version `1.0.2`)
 3. Upload `.nupkg` and `.snupkg` artifacts
 4. Publish both packages to nuget.org
 
@@ -200,16 +270,20 @@ The sample demonstrates:
 
 - Live `LucideIcon` preview with size, color, stroke, flip, spin, and renderer switching
 - Static `Lucide.GetImage()` usage
-- ToolStrip and Button integration
+- `IconButton`, `IconToolStripButton`, and `IconDropDownButton` integration
 - Cache clearing
 
 ## Project Structure
 
 ```
 LucideSharp/
-├── src/LucideSharp.WinForms/     # Main library (NuGet package)
+├── src/LucideSharp.WinForms/     # Main library (NuGet package: LucideSharp)
+│   └── Controls/                 # LucideIcon, IconButton, IconToolStripButton, IconDropDownButton
 ├── tools/IconGenerator/         # Downloads Lucide icons and regenerates enum/data
+├── tools/SymbolValidator/       # Validates NuGet symbol packages in CI
 ├── samples/WinFormsSample/      # Demo application
+├── assets/screenshots/          # README screenshots
+├── .github/workflows/ci.yml     # Build, pack, and publish
 └── README.md
 ```
 

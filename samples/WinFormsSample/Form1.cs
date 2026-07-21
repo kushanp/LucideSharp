@@ -184,11 +184,43 @@ public partial class Form1 : Form
             GripStyle = ToolStripGripStyle.Hidden
         };
 
-        _toolStrip.Items.Add(new ToolStripButton("Home", Lucide.GetImage(LucideKind.Heart, 20, Color.IndianRed), (_, _) => { }) { DisplayStyle = ToolStripItemDisplayStyle.Image });
-        _toolStrip.Items.Add(new ToolStripButton("Search", Lucide.GetImage(LucideKind.Search, 20, Color.SteelBlue), (_, _) => { }) { DisplayStyle = ToolStripItemDisplayStyle.Image });
-        _toolStrip.Items.Add(new ToolStripButton("Settings", Lucide.GetImage(LucideKind.Settings, 20, Color.DimGray), (_, _) => { }) { DisplayStyle = ToolStripItemDisplayStyle.Image });
+        _toolStrip.Items.Add(new IconToolStripButton
+        {
+            Text = "Home",
+            Kind = LucideKind.Heart,
+            IconColor = Color.IndianRed,
+            IconSize = 20,
+            DisplayStyle = ToolStripItemDisplayStyle.Image
+        });
+        _toolStrip.Items.Add(new IconToolStripButton
+        {
+            Text = "Search",
+            Kind = LucideKind.Search,
+            IconColor = Color.SteelBlue,
+            IconSize = 20,
+            DisplayStyle = ToolStripItemDisplayStyle.Image
+        });
+        _toolStrip.Items.Add(new IconToolStripButton
+        {
+            Text = "Settings",
+            Kind = LucideKind.Settings,
+            IconColor = Color.DimGray,
+            IconSize = 20,
+            DisplayStyle = ToolStripItemDisplayStyle.Image
+        });
+        var moreMenu = new IconDropDownButton
+        {
+            Text = "More",
+            Kind = LucideKind.Ellipsis,
+            IconColor = Color.SlateGray,
+            IconSize = 20,
+            DisplayStyle = ToolStripItemDisplayStyle.Image
+        };
+        moreMenu.DropDownItems.Add("Option A");
+        moreMenu.DropDownItems.Add("Option B");
+        _toolStrip.Items.Add(moreMenu);
         _toolStrip.Items.Add(new ToolStripSeparator());
-        _toolStrip.Items.Add(new ToolStripLabel("ToolStrip icons rendered via Lucide.GetImage()"));
+        _toolStrip.Items.Add(new ToolStripLabel("ToolStrip icons via IconToolStripButton / IconDropDownButton"));
         Controls.Add(_toolStrip);
 
         var buttonRow = new FlowLayoutPanel
@@ -200,11 +232,13 @@ public partial class Form1 : Form
 
         foreach (var kind in new[] { LucideKind.Heart, LucideKind.Star, LucideKind.Settings, LucideKind.Search })
         {
-            var button = new Button
+            var button = new IconButton
             {
                 Text = kind.ToString(),
+                Kind = kind,
+                IconColor = Color.White,
+                IconSize = 20,
                 Size = new Size(150, 40),
-                Image = Lucide.GetImage(kind, 20, Color.White),
                 TextImageRelation = TextImageRelation.ImageBeforeText,
                 BackColor = Color.FromArgb(37, 99, 235),
                 ForeColor = Color.White,
