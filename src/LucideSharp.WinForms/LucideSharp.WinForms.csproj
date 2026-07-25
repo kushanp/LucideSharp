@@ -14,7 +14,7 @@
 
     <!-- NuGet package metadata -->
     <PackageId>LucideSharp</PackageId>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Authors>LucideSharp Contributors</Authors>
     <Company>LucideSharp</Company>
     <Product>LucideSharp</Product>
@@ -38,7 +38,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Svg.Skia" Version="3.0.0" />
+    <PackageReference Include="Svg.Skia" Version="5.1.1" />
     <PackageReference Include="Svg" Version="3.4.7" Aliases="ClassicSvg" />
   </ItemGroup>
 
