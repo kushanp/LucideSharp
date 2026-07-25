@@ -14,7 +14,7 @@
 
     <!-- NuGet package metadata -->
     <PackageId>LucideSharp</PackageId>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
     <Authors>LucideSharp Contributors</Authors>
     <Company>LucideSharp</Company>
     <Product>LucideSharp</Product>
@@ -22,9 +22,10 @@
     <PackageTags>winforms;svg;icons;lucide;lucidesharp;skiasharp</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/lucidesharp/lucidesharp</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/lucidesharp/lucidesharp</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/kushanp/LucideSharp</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/kushanp/LucideSharp</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <RepositoryBranch>main</RepositoryBranch>
     <PackageIcon>icon.png</PackageIcon>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>
