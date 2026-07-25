@@ -149,21 +149,35 @@ jobs:
             }
           }
 
-          Write-Host "Pushing $($nupkg.FullName)"
+          Write-Host "Pushing $($nupkg.FullName) ($($nupkg.Length) bytes)"
           $nupkgResult = Push-NuGetPackage -PackagePath $nupkg.FullName
 
           if ($nupkgResult.ExitCode -ne 0) {
             throw "Failed to push $($nupkg.Name). Exit code: $($nupkgResult.ExitCode)"
           }
 
-          if ($nupkgResult.Output -match '409 \(Conflict\)|already exists and cannot be modified|already been pushed') {
+          $wasDuplicate = $nupkgResult.Output -match '409 \(Conflict\)|already exists and cannot be modified|Package .+ already exists'
+          $wasPushed = $nupkgResult.Output -match 'Your package was pushed|Created https://'
+
+          if ($wasDuplicate -and -not $wasPushed) {
             Write-Warning "Main package already exists on NuGet.org. Skipping symbol package push to avoid PDB/DLL mismatch."
             exit 0
           }
 
-          Write-Host "Pushing $($snupkg.FullName)"
+          if (-not $wasPushed) {
+            throw "NuGet push returned exit code 0 but no success confirmation was found for $($nupkg.Name). Output:`n$($nupkgResult.Output)"
+          }
+
+          Write-Host "Pushing $($snupkg.FullName) ($($snupkg.Length) bytes)"
           $snupkgResult = Push-NuGetPackage -PackagePath $snupkg.FullName
 
           if ($snupkgResult.ExitCode -ne 0) {
             throw "Failed to push $($snupkg.Name). Exit code: $($snupkgResult.ExitCode)"
           }
+
+          $snupkgPushed = $snupkgResult.Output -match 'Your package was pushed|Created https://|already exists|409 \(Conflict\)'
+          if (-not $snupkgPushed) {
+            throw "Symbol package push returned exit code 0 but no success confirmation was found for $($snupkg.Name). Output:`n$($snupkgResult.Output)"
+          }
+
+          Write-Host "Successfully published $($nupkg.Name) and $($snupkg.Name)."
