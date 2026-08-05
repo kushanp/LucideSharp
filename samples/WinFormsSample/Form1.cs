@@ -216,11 +216,45 @@ public partial class Form1 : Form
             IconSize = 20,
             DisplayStyle = ToolStripItemDisplayStyle.Image
         };
-        moreMenu.DropDownItems.Add("Option A");
-        moreMenu.DropDownItems.Add("Option B");
+        moreMenu.DropDownItems.Add(new IconToolStripMenuItem("Option A", LucideKind.Circle)
+        {
+            IconColor = Color.SteelBlue,
+            IconSize = 16
+        });
+        moreMenu.DropDownItems.Add(new IconToolStripMenuItem("Option B", LucideKind.Square)
+        {
+            IconColor = Color.SeaGreen,
+            IconSize = 16
+        });
         _toolStrip.Items.Add(moreMenu);
+
+        var saveSplit = new IconToolStripSplitButton
+        {
+            Text = "Save",
+            Kind = LucideKind.Save,
+            IconColor = Color.ForestGreen,
+            IconSize = 20,
+            DisplayStyle = ToolStripItemDisplayStyle.Image
+        };
+        saveSplit.DropDownItems.Add(new IconToolStripMenuItem("Save", LucideKind.Save)
+        {
+            IconColor = Color.ForestGreen,
+            IconSize = 16
+        });
+        saveSplit.DropDownItems.Add(new IconToolStripMenuItem("Save As…", LucideKind.FileDown)
+        {
+            IconColor = Color.DimGray,
+            IconSize = 16
+        });
+        saveSplit.DropDownItems.Add(new IconToolStripMenuItem("Export", LucideKind.Upload)
+        {
+            IconColor = Color.SteelBlue,
+            IconSize = 16
+        });
+        _toolStrip.Items.Add(saveSplit);
+
         _toolStrip.Items.Add(new ToolStripSeparator());
-        _toolStrip.Items.Add(new ToolStripLabel("ToolStrip icons via IconToolStripButton / IconDropDownButton"));
+        _toolStrip.Items.Add(new ToolStripLabel("ToolStrip icons via IconToolStripButton / IconDropDownButton / IconToolStripSplitButton"));
         Controls.Add(_toolStrip);
 
         var buttonRow = new FlowLayoutPanel

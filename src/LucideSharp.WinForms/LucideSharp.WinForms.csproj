@@ -14,7 +14,7 @@
 
     <!-- NuGet package metadata -->
     <PackageId>LucideSharp</PackageId>
-    <Version>1.0.5</Version>
+    <Version>1.0.6</Version>
     <Authors>LucideSharp Contributors</Authors>
     <Company>LucideSharp</Company>
     <Product>LucideSharp</Product>
